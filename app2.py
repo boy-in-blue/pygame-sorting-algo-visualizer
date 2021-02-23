@@ -1,6 +1,7 @@
 import pygame as pg
 import sys
 import numpy
+import copy
 
 SIZE = WIDTH, HEIGHT = 800, 600
 BLUE = (145, 196, 200)
@@ -14,6 +15,7 @@ class Sorting:
         self.numbers = numbers
         self.screen = None
         self.clock = None
+        self.stack = []
 
     def init(self):
         pg.init()
@@ -40,7 +42,7 @@ class Sorting:
                           ))
 
     def selection_sort(self):
-        last_accessed = [0, 0]
+        last_accessed = None
         for i in range(len(self.numbers)):
             min_index = i
             for j in range(i+1, len(self.numbers)):
@@ -51,7 +53,7 @@ class Sorting:
             yield last_accessed
 
     def bubble_sort(self):
-        last_accessed = [0, 0]
+        last_accessed = None
         for i in range(len(self.numbers)):
             for j in range(0, len(self.numbers) - i - 1):
                 if self.numbers[j] > self.numbers[j+1]:
@@ -61,7 +63,7 @@ class Sorting:
                     yield last_accessed
 
     def insertion_sort(self):
-        last_accessed = [0, 0]
+        last_accessed = None
         for i in range(1, len(self.numbers)):
             key = self.numbers[i]
             j = i - 1
@@ -74,11 +76,51 @@ class Sorting:
             last_accessed = [j+1, i]
             yield last_accessed
 
+    def merge_sort(self, n):
+        last_accessed = None
+        if len(n) > 1:
+            mid = len(n)//2
+            L = n[:mid]
+            R = n[mid:]
+            self.merge_sort(L)
+            self.merge_sort(R)
+            i = j = k = 0
+
+            while i < len(L) and j < len(R):
+                if L[i] < R[j]:
+                    n[k] = L[i]
+                    last_accessed = [k, k]
+                    self.stack.append(last_accessed)
+                    #yield last_accessed
+                    i += 1
+                else:
+                    n[k] = R[j]
+                    last_accessed = [k, k]
+                    self.stack.append(last_accessed)
+                    #yield last_accessed
+                    j += 1
+                k += 1
+
+            while i < len(L):
+                n[k] = L[i]
+                last_accessed = [k, k]
+                self.stack.append(last_accessed)
+                #yield last_accessed
+                i += 1
+                k += 1
+            while j < len(R):
+                n[k] = R[j]
+                last_accessed = [k, k]
+                #yield last_accessed
+                self.stack.append(last_accessed)
+                j += 1
+                k += 1
+
 
 if __name__ == '__main__':
     lastaccessed = None
     is_sorted = False
-    s = Sorting(numpy.random.randint(1, int(HEIGHT/20), 19))
+    s = Sorting(numpy.random.randint(1, int(HEIGHT/20), 19).tolist())
     s.init()
     print(
         '''
@@ -86,6 +128,7 @@ if __name__ == '__main__':
         S = selection sort
         B = bubble sort
         I = insertion sort
+        M = merge sort (somewhat working)
         '''
     )
     redraw_event = pg.USEREVENT + 1
@@ -98,22 +141,30 @@ if __name__ == '__main__':
                     sys.exit()
                 elif event.key == pg.K_s:
                     if is_sorted:
-                        s.numbers = numpy.random.randint(1, int(HEIGHT/20), 19)
+                        s.numbers = numpy.random.randint(1, int(HEIGHT/20), 19).tolist()
                         is_sorted = False
                     sort_yielder = s.selection_sort()
                     pg.time.set_timer(redraw_event, 50)
                 elif event.key == pg.K_b:
                     if is_sorted:
-                        s.numbers = numpy.random.randint(1, int(HEIGHT/20), 19)
+                        s.numbers = numpy.random.randint(1, int(HEIGHT/20), 19).tolist()
                         is_sorted = False
                     sort_yielder = s.bubble_sort()
                     pg.time.set_timer(redraw_event, 50)
                 elif event.key == pg.K_i:
                     if is_sorted:
-                        s.numbers = numpy.random.randint(1, int(HEIGHT/20), 19)
+                        s.numbers = numpy.random.randint(1, int(HEIGHT/20), 19).tolist()
                         is_sorted = False
                     sort_yielder = s.insertion_sort()
                     pg.time.set_timer(redraw_event, 50)
+                elif event.key == pg.K_m:
+                    if is_sorted:
+                        s.numbers = numpy.random.randint(
+                            1, int(HEIGHT/20), 19).tolist()
+                        is_sorted = False
+                    sort_yielder = s.merge_sort(s.numbers)
+                    print(s.stack)
+                    # pg.time.set_timer(redraw_event, 50)
                 else:
                     pass
 
@@ -121,7 +172,7 @@ if __name__ == '__main__':
                 try:
                     nextyield = next(sort_yielder)
                     lastaccessed = nextyield
-                except StopIteration:
+                except StopIteration or TypeError:
                     lastaccessed = None
                     pg.time.set_timer(redraw_event, 0)
                     is_sorted = True
