@@ -6,7 +6,7 @@ SIZE = WIDTH, HEIGHT = 800, 600
 BLUE = (145, 196, 200)
 YELLOW = (212, 210, 149)
 BLACK = (0, 0, 0)
-BLUER = (83,119,133)
+BLUER = (83, 119, 133)
 
 
 class Sorting:
@@ -17,7 +17,7 @@ class Sorting:
 
     def init(self):
         pg.init()
-        self.clock = pg.time.Clock 
+        self.clock = pg.time.Clock
         self.screen = pg.display.set_mode(SIZE)
 
     def draw_background(self, color):
@@ -49,15 +49,30 @@ class Sorting:
             self.numbers[i], self.numbers[min_index] = self.numbers[min_index], self.numbers[i]
             last_accessed = [i, min_index]
             yield last_accessed
-        
+
     def bubble_sort(self):
         last_accessed = [0, 0]
         for i in range(len(self.numbers)):
             for j in range(0, len(self.numbers) - i - 1):
                 if self.numbers[j] > self.numbers[j+1]:
-                    self.numbers[j], self.numbers[j+1] = self.numbers[j+1], self.numbers[j]
+                    self.numbers[j], self.numbers[j +
+                                                  1] = self.numbers[j+1], self.numbers[j]
                     last_accessed = [j, j+1]
                     yield last_accessed
+
+    def insertion_sort(self):
+        last_accessed = [0, 0]
+        for i in range(1, len(self.numbers)):
+            key = self.numbers[i]
+            j = i - 1
+            while j >= 0 and key < self.numbers[j]:
+                self.numbers[j+1] = self.numbers[j]
+                last_accessed = [j, j+1]
+                yield last_accessed
+                j -= 1
+            self.numbers[j + 1] = key
+            last_accessed = [j+1, i]
+            yield last_accessed
 
 
 if __name__ == '__main__':
@@ -70,12 +85,15 @@ if __name__ == '__main__':
         CAPSLOCK, ESC = exit
         S = selection sort
         B = bubble sort
+        I = insertion sort
         '''
     )
     redraw_event = pg.USEREVENT + 1
     while 1:
         for event in pg.event.get():
-            if event.type == pg.KEYDOWN:
+            if event.type == pg.QUIT:
+                sys.exit()
+            elif event.type == pg.KEYDOWN:
                 if event.key in (pg.K_CAPSLOCK, pg.K_ESCAPE):
                     sys.exit()
                 elif event.key == pg.K_s:
@@ -83,25 +101,32 @@ if __name__ == '__main__':
                         s.numbers = numpy.random.randint(1, int(HEIGHT/20), 19)
                         is_sorted = False
                     sort_yielder = s.selection_sort()
-                    pg.time.set_timer(redraw_event, 500)
+                    pg.time.set_timer(redraw_event, 50)
                 elif event.key == pg.K_b:
                     if is_sorted:
                         s.numbers = numpy.random.randint(1, int(HEIGHT/20), 19)
                         is_sorted = False
                     sort_yielder = s.bubble_sort()
-                    pg.time.set_timer(redraw_event, 500)
+                    pg.time.set_timer(redraw_event, 50)
+                elif event.key == pg.K_i:
+                    if is_sorted:
+                        s.numbers = numpy.random.randint(1, int(HEIGHT/20), 19)
+                        is_sorted = False
+                    sort_yielder = s.insertion_sort()
+                    pg.time.set_timer(redraw_event, 50)
                 else:
                     pass
-            else:
-                pass
-            if event.type == redraw_event:
+
+            elif event.type == redraw_event:
                 try:
                     nextyield = next(sort_yielder)
                     lastaccessed = nextyield
                 except StopIteration:
                     lastaccessed = None
                     pg.time.set_timer(redraw_event, 0)
-                    is_sorted = True 
+                    is_sorted = True
+            else:
+                pass
         s.draw_background(YELLOW)
         s.draw_graph(lastaccessed)
         pg.display.update()
