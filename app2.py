@@ -1,0 +1,107 @@
+import pygame as pg
+import sys
+import numpy
+
+SIZE = WIDTH, HEIGHT = 800, 600
+BLUE = (145, 196, 200)
+YELLOW = (212, 210, 149)
+BLACK = (0, 0, 0)
+BLUER = (83,119,133)
+
+
+class Sorting:
+    def __init__(self, numbers: list):
+        self.numbers = numbers
+        self.screen = None
+        self.clock = None
+
+    def init(self):
+        pg.init()
+        self.clock = pg.time.Clock 
+        self.screen = pg.display.set_mode(SIZE)
+
+    def draw_background(self, color):
+        self.screen.fill(color)
+
+    def draw_graph(self, last_access=None):
+        for index in range(len(self.numbers)):
+            if last_access:
+                if index in last_access:
+                    color = BLUER
+                else:
+                    color = BLUE
+            else:
+                color = BLUE
+            pg.draw.rect(self.screen, color,
+                         (20*((2*index)+1),
+                             0,
+                             20,
+                             self.numbers[index] * 20
+                          ))
+
+    def selection_sort(self):
+        last_accessed = [0, 0]
+        for i in range(len(self.numbers)):
+            min_index = i
+            for j in range(i+1, len(self.numbers)):
+                if self.numbers[min_index] > self.numbers[j]:
+                    min_index = j
+            self.numbers[i], self.numbers[min_index] = self.numbers[min_index], self.numbers[i]
+            last_accessed = [i, min_index]
+            yield last_accessed
+        
+    def bubble_sort(self):
+        last_accessed = [0, 0]
+        for i in range(len(self.numbers)):
+            for j in range(0, len(self.numbers) - i - 1):
+                if self.numbers[j] > self.numbers[j+1]:
+                    self.numbers[j], self.numbers[j+1] = self.numbers[j+1], self.numbers[j]
+                    last_accessed = [j, j+1]
+                    yield last_accessed
+
+
+if __name__ == '__main__':
+    lastaccessed = None
+    is_sorted = False
+    s = Sorting(numpy.random.randint(1, int(HEIGHT/20), 19))
+    s.init()
+    print(
+        '''
+        CAPSLOCK, ESC = exit
+        S = selection sort
+        B = bubble sort
+        '''
+    )
+    redraw_event = pg.USEREVENT + 1
+    while 1:
+        for event in pg.event.get():
+            if event.type == pg.KEYDOWN:
+                if event.key in (pg.K_CAPSLOCK, pg.K_ESCAPE):
+                    sys.exit()
+                elif event.key == pg.K_s:
+                    if is_sorted:
+                        s.numbers = numpy.random.randint(1, int(HEIGHT/20), 19)
+                        is_sorted = False
+                    sort_yielder = s.selection_sort()
+                    pg.time.set_timer(redraw_event, 500)
+                elif event.key == pg.K_b:
+                    if is_sorted:
+                        s.numbers = numpy.random.randint(1, int(HEIGHT/20), 19)
+                        is_sorted = False
+                    sort_yielder = s.bubble_sort()
+                    pg.time.set_timer(redraw_event, 500)
+                else:
+                    pass
+            else:
+                pass
+            if event.type == redraw_event:
+                try:
+                    nextyield = next(sort_yielder)
+                    lastaccessed = nextyield
+                except StopIteration:
+                    lastaccessed = None
+                    pg.time.set_timer(redraw_event, 0)
+                    is_sorted = True 
+        s.draw_background(YELLOW)
+        s.draw_graph(lastaccessed)
+        pg.display.update()
